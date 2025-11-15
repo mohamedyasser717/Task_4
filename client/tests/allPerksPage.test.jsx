@@ -4,9 +4,6 @@ import { Routes, Route } from 'react-router-dom';
 import AllPerks from '../src/pages/AllPerks.jsx';
 import { renderWithRouter } from './utils/renderWithRouter.js';
 
-
-  
-
 describe('AllPerks page (Directory)', () => {
   test('lists public perks and responds to name filtering', async () => {
     // The seeded record gives us a deterministic expectation regardless of the
@@ -51,7 +48,36 @@ describe('AllPerks page (Directory)', () => {
   */
 
   test('lists public perks and responds to merchant filtering', async () => {
-    // This will always fail until the TODO above is implemented.
-    expect(true).toBe(false);
+    const seededPerk = global.__TEST_CONTEXT__.seededPerk;
+
+    renderWithRouter(
+      <Routes>
+        <Route path="/explore" element={<AllPerks />} />
+      </Routes>,
+      { initialEntries: ['/explore'] }
+    );
+
+    // Ensure initial data loaded
+    await waitFor(() => {
+      expect(screen.getByText(seededPerk.title)).toBeInTheDocument();
+    });
+
+    // Find the merchant dropdown by locating a select that contains the seeded merchant option
+    const selects = screen.getAllByRole('combobox');
+    const merchantSelect = selects.find((sel) =>
+      Array.from(sel.options).some((o) => o.textContent === seededPerk.merchant)
+    );
+    expect(merchantSelect).toBeTruthy();
+
+    // Select the seeded merchant
+    fireEvent.change(merchantSelect, { target: { value: seededPerk.merchant } });
+
+    // Wait for the filtered results to appear (the seeded perk should still be shown)
+    await waitFor(() => {
+      expect(screen.getByText(seededPerk.title)).toBeInTheDocument();
+    });
+
+    // Summary text should reflect a "Showing" count
+    expect(screen.getByText(/showing/i)).toHaveTextContent('Showing');
   });
 });
